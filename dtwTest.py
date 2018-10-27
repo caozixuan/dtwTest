@@ -137,8 +137,8 @@ def get_predict_next_by_array(predict_array, use_array, co_length, next_element)
             #simi_array = normal(simi_array)
             #predict_array = normal(predict_array)
             trend_use_array = (use_array[len(use_array) - j - 1]-simi_array[-1])/(simi_array[-1]*1.0)+1
-            co = (sum(simi_array)*1.0/len(simi_array)/(sum(predict_array)*1.0/len(predict_array)))
-            co_invert = 1.0/co
+            #co = (sum(simi_array)*1.0/len(simi_array)/(sum(predict_array)*1.0/len(predict_array)))
+            #co_invert = 1.0/co
             #simi_array = co*np.array(predict_array)
             simi_array = np.array(simi_array).reshape(-1, 1)
             predict_array_tmp = np.array(predict_array).reshape(-1, 1)
@@ -439,15 +439,15 @@ if __name__ == '__main__':
     array1 = normal(array1)
     print max(title[4])
     print min(title[4])
-    es2 = ExponentialSmoothing(title[5])
+    es2 = ExponentialSmoothing(title[8])
     model2 = es2.fit()
     array2 = model2.predict(1, -1)
     oil = normal(array2)
     d = []
     elements = []
     errors = []
-    array1 = g1
-    oil = g3
+    #array1 = g1
+    #oil = g3
     result, error_sum = get_predict_array(array1, 3, 0)
     all_errors = []
     for z in range(0, compare_size + window):
@@ -481,12 +481,12 @@ if __name__ == '__main__':
             errors.append(result[i])
     print len(result)
     print len(errors)
-    plt.plot(array1)
-    plt.plot(oil)
+    #plt.plot(array1)
+    #plt.plot(oil)
     print sum(errors)
     print sum(result[0:len(result) - 1])
-    #plt.plot(result[0:len(result) - 1])
-    #plt.plot(errors)
+    plt.plot(result[0:len(result) - 1])
+    plt.plot(errors)
     # plt.plot(all_errors)
     fig = plt.figure()
     axes = fig.add_subplot(111)
