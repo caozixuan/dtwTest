@@ -134,18 +134,9 @@ def get_predict_next_by_array(predict_array, use_array, co_length, next_element)
         j = 0
         while j <= window - max_length:
             simi_array = use_array[len(use_array) - i - j - 1:len(use_array) - j - 1]
-            if simi_array==[87,81,76]:
-                #print predict_array
-                co = (sum(simi_array) * 1.0 / len(simi_array) / (sum(predict_array) * 1.0 / len(predict_array)))
-                co_invert = 1.0 / co
-                predict_array_tmp = np.array(predict_array).reshape(-1, 1)
-                dist, cost, acc, path = dtw(simi_array, predict_array_tmp,
-                                            dist=lambda simi_array, predict_array_tmp: np.linalg.norm(
-                                                simi_array - predict_array_tmp, ord=1))
-                #print dist
-                #print co_invert*use_array[len(use_array) - j - 1]
             #simi_array = normal(simi_array)
             #predict_array = normal(predict_array)
+            trend_use_array = (use_array[len(use_array) - j - 1]-simi_array[-1])/(simi_array[-1]*1.0)+1
             co = (sum(simi_array)*1.0/len(simi_array)/(sum(predict_array)*1.0/len(predict_array)))
             co_invert = 1.0/co
             #simi_array = co*np.array(predict_array)
@@ -154,7 +145,8 @@ def get_predict_next_by_array(predict_array, use_array, co_length, next_element)
             dist, cost, acc, path = dtw(simi_array, predict_array_tmp,
                                         dist=lambda simi_array, predict_array_tmp: np.linalg.norm(
                                             simi_array - predict_array_tmp, ord=1))
-            distances.append(DistanceElement(simi_array, dist, co_invert*use_array[len(use_array) - j - 1]))
+            #distances.append(DistanceElement(simi_array, dist, co_invert*use_array[len(use_array) - j - 1]))
+            distances.append(DistanceElement(simi_array, dist/i, trend_use_array*predict_array[-1]))
             if dist==0:
                 print 'why is zero'
             j += 1
@@ -198,11 +190,13 @@ def normal(a):
         return a
     for i in range(0, len(a)):
         a[i] = (a[i] - min_value) / (max_value - min_value)
-        a[i] = a[i] * 100 + 1
-        if a[i] - int(a[i]) >= 0.5:
-            a[i] = int(a[i]) + 1
-        else:
-            a[i] = int(a[i])
+        if a[i]==0:
+            a[i]=0.0001
+        #a[i] = a[i] * 100 + 1
+        #if a[i] - int(a[i]) >= 0.5:
+        #    a[i] = int(a[i]) + 1
+        #else:
+        #    a[i] = int(a[i])
         #a[i] = math.log(a[i])
     return a
 
@@ -275,12 +269,7 @@ def add_noise(noise, a):
     return a
 
 
-# 获取要比较的数据
-move, r_price, m_price = get_MR_data()
-title, title_copy = get_data()
-trend, usd = read_from_csv()
-trend = map(float, trend)
-usd = map(float, usd)
+
 """
 test1 = [10,12,9,8,10,11,12,10,10,9,9,11,11,13,15,17,19,25,20,18,17,13,11,12,10,9,10,10,9,9,11,10,11,11,10]
 test2 = [40,41,43,39,41,42,43,40,39,39,40,41,42,40,39,38,39,45,50,55,60,61,55,54,50,43,42,42,41,40,39,38,38,40,40]
@@ -350,7 +339,7 @@ def ar_predict_next_array(input_array, lag, length, difference=0):
     predict_array = result_arma.predict(len(input_array), len(input_array)+length)
     return predict_array
 
-def get_predict_array(whole_array, lag, difference=0):
+def get_predict_array(whole_array, lag, difference=1):
     result = []
     error_sum = []
     for i in range(0, len(whole_array) - 1):
@@ -391,6 +380,8 @@ def change_to_continue(a):
 
 
 def difference_predict(input_array):
+    # 获取要比较的数据
+
     es = ExponentialSmoothing(input_array)
     model = es.fit()
     predict_array = model.predict()
@@ -433,28 +424,30 @@ print len(title[0])
 plt.show()
 """
 if __name__ == '__main__':
-
-    g1 = ge_cause(200, 10)
+    move, r_price, m_price = get_MR_data()
+    title, title_copy = get_data()
+    trend, usd = read_from_csv()
+    trend = map(float, trend)
+    usd = map(float, usd)
+    g1 = ge_cause(100, 5)
     g2 = forward_shift(g1, 5)
     g2 = add_noise(5, g2)
+    g3 = ge_cause(100, 10)
     es = ExponentialSmoothing(title[0])
     model = es.fit()
     array1 = model.predict(1, -1)
     array1 = normal(array1)
-    es2 = ExponentialSmoothing(title[8])
+    print max(title[4])
+    print min(title[4])
+    es2 = ExponentialSmoothing(title[5])
     model2 = es2.fit()
     array2 = model2.predict(1, -1)
     oil = normal(array2)
     d = []
     elements = []
     errors = []
-    g1 = [10, 8, 7, 9, 11, 13, 10, 9, 11, 13, 15, 11, 14, 16, 18, 19, 20, 22, 25, 26, 28, 27, 29, 30, 31, 35, 34, 32,
-          30, 31, 28, 26, 23, 20, 15, 14, 10, 9, 10, 11, 8, 7, 5, 9, 10, 12, 13, 14, 10, 13]
-    g2 = [10, 12, 11, 9, 8, 9, 10, 11, 12, 10, 9, 11, 11, 12, 10, 9, 8, 10, 12, 14, 15, 17, 19, 22, 23, 25, 28, 27, 30,
-          34, 35, 36, 39, 37, 33, 30, 28, 27, 26, 24, 20, 16, 15, 14, 12, 11, 8, 9, 10, 11]
-    # g1 = ge_cause(100,5)
-    # g2 = forward_shift(g1,5)
-    g2 = add_noise(5, g2)
+    array1 = g1
+    oil = g3
     result, error_sum = get_predict_array(array1, 3, 0)
     all_errors = []
     for z in range(0, compare_size + window):
@@ -463,20 +456,15 @@ if __name__ == '__main__':
     print array1
     print oil
     print len(result)
+    better_points = []
+    cause_points = []
     for i in range(compare_size + window, len(result) - 2):
         predict_array = array1[i - compare_size:i]
         use_array = oil[i - compare_size - window:i + 1]
         element = get_predict_next_by_array(predict_array, use_array, 0, 0)
         elements.append(element)
         all_errors.append(abs(element.next_element - array1[i]))
-        if element.distance <= 5:
-            # print element.distance
-            # d.append(element.distance)
-            # print element.array.tolist()
-            # print predict_array
-            # print element.next_element
-            # print array1[i]
-            # print '************************'
+        if element.distance <= 1:
             errors.append(abs(element.next_element - array1[i]))
             if abs(element.next_element - array1[i]) < result[i]:
                 print "*************"
@@ -485,6 +473,10 @@ if __name__ == '__main__':
                 print element.next_element
                 print array1[i]
                 print "*************"
+                better_points.extend(predict_array)
+                #better_points.append(array1[i])
+                for x in element.array:
+                    cause_points.append(x[0])
         else:
             errors.append(result[i])
     print len(result)
@@ -496,6 +488,20 @@ if __name__ == '__main__':
     #plt.plot(result[0:len(result) - 1])
     #plt.plot(errors)
     # plt.plot(all_errors)
+    fig = plt.figure()
+    axes = fig.add_subplot(111)
+    for i in range(len(array1)):
+        if array1[i] in better_points:
+            #  第i行数据，及returnMat[i:,0]及矩阵的切片意思是:i：i+1代表第i行数据,0代表第1列数据
+            axes.scatter(i, array1[i], color='red')
+        else:
+            axes.scatter(i, array1[i], color='black')
+        if oil[i] in cause_points:
+            axes.scatter(i, oil[i], color='green')
+        else:
+            axes.scatter(i, oil[i], color='blue')
+    plt.xlabel('X')
+    plt.ylabel('Y')
     plt.show()
 
 
